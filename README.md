@@ -1,55 +1,43 @@
-# LangChain e OpenAI
+# Parte 2 - Questão 2: OpenAI
 
-DR3 - TP2. Python 3.11 ou 3.12. Execute os comandos dentro desta pasta.
+## Como executar
 
-## Instalação
+Use Python 3.11 ou 3.12. Dentro desta pasta, crie um ambiente e instale as dependências:
 
 ```bash
 python -m venv .venv
-# Linux/macOS:
-source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
 ```
 
-## Execução
+Ative o ambiente:
 
 ```bash
-uvicorn main:app --host 127.0.0.1 --port 8000
+# Linux ou macOS
+source .venv/bin/activate
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
 ```
 
-Abra http://127.0.0.1:8000/docs para testar pelo Swagger. Pare uma aplicação antes de iniciar outra na mesma porta. O endpoint `/health` confirma que o startup terminou.
+```bash
+python -m pip install -r requirements.txt
+uvicorn main:app --port 8000
+```
+
+Abra http://127.0.0.1:8000/docs, selecione POST /translate, clique em “Try it out” e envie:
+
+```json
+{"text": "The weather is beautiful today."}
+```
+
+Também é possível enviar pelo terminal (no Windows, use curl.exe):
 
 ```bash
 curl -X POST http://127.0.0.1:8000/translate -H "Content-Type: application/json" -d '{"text":"The weather is beautiful today."}'
 ```
 
-No PowerShell, use o Swagger ou `curl.exe`. Entrada inválida retorna 422. Falhas de serviço são documentadas no código. Não há autenticação pública: executar como protótipo local.
+Execute uma aplicação por vez na porta 8000. Textos vazios são recusados com erro 422.
 
-## Testes
+## Chave OpenAI
 
-```bash
-python -m pytest -q
-```
+Antes de executar, crie `.env.local` nesta pasta e defina `OPENAI_API_KEY` com sua chave, ou use essa variável no ambiente. A chave não acompanha o trabalho. A API precisa de acesso ao modelo gpt-4.1-mini e saldo ou cota disponível.
 
-Os testes de contrato substituem a inferência para validar HTTP sem download nem cobrança. Eles não medem qualidade do modelo. Consulte `VALIDACAO.md` na raiz da entrega para as verificações realmente executadas.
-
-## Configuração OpenAI
-
-Defina `OPENAI_API_KEY` no ambiente ou em `.env.local` nesta pasta antes de iniciar. `.env.example` lista as variáveis sem segredos. A chave não acompanha a entrega. `OPENAI_MODEL` permite selecionar outro modelo disponível na conta; padrão: `gpt-4.1-mini`. A conta precisa de acesso e saldo/cota de API; assinatura ChatGPT é separada.
-
-A chamada usa `ainvoke` para não bloquear o loop HTTP. Há timeout de 30 segundos por tentativa e no máximo uma repetição automática; o tempo total pode superar 30 segundos. Isso não garante baixa latência. Erros 429, 502, 503 e 504 têm respostas controladas. Em produção, acrescentar limite de concorrência, orçamento, autenticação e métricas.
-
-Para repetir as versões diretas usadas na validação, instale `requirements-testadas.txt` no lugar de `requirements.txt`. Os pacotes transitivos ainda são resolvidos pelo pip.
-
-## Formato de saída
-
-Exemplo ilustrativo; gerações reais podem variar.
-
-```json
-{
-  "translation": "Le temps est magnifique aujourd’hui.",
-  "source_language": "en",
-  "target_language": "fr"
-}
-```
+A chamada ao modelo é assíncrona, com uma tentativa e timeout de 30 segundos. Limite de uso retorna 429; indisponibilidade retorna 503. A resposta tem o campo `translation`.
